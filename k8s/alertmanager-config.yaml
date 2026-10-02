@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alertmanager-monitoring-kube-prometheus-alertmanager
+  namespace: monitoring
+type: Opaque
+stringData:
+  alertmanager.yaml: |
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname', 'namespace']
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 1h
+      receiver: 'aiops'
+      routes:
+      - match:
+          severity: critical
+        receiver: 'aiops'
+        continue: true
+      - match:
+          severity: warning
+        receiver: 'aiops'
+    receivers:
+    - name: 'aiops'
+      webhook_configs:
+      - url: 'http://192.168.37.10:5001/webhook'
+        send_resolved: false

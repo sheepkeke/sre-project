@@ -1,0 +1,46 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: flask-alerts
+  namespace: sre-project
+  labels:
+    release: monitoring
+spec:
+  groups:
+  - name: flask.rules
+    rules:
+    - alert: FlaskPodDown
+      expr: kube_deployment_status_replicas_available{namespace="sre-project", deployment="flask"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Flask Pod 挂了"
+        description: "Flask 可用副本数为 0，持续超过 1 分钟"
+
+    - alert: FlaskHighCPU
+      expr: rate(container_cpu_usage_seconds_total{namespace="sre-project", container="flask"}[5m]) > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Flask CPU 使用率过高"
+        description: "Flask CPU 使用率超过 80%，当前值 {{ $value }}"
+
+    - alert: FlaskHighMemory
+      expr: container_memory_working_set_bytes{namespace="sre-project", container="flask"} > 200000000
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Flask 内存使用过高"
+        description: "Flask 内存使用超过 200Mi，当前值 {{ $value }}"
+
+    - alert: FlaskPodRestarting
+      expr: increase(kube_pod_container_status_restarts_total{namespace="sre-project"}[10m]) > 3
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Flask Pod 频繁重启"
+        description: "Flask Pod {{ $labels.pod }} 10 分钟内重启超过 3 次"

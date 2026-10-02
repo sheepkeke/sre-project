@@ -1,0 +1,11 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: flask-pod-kill
+  namespace: sre-project
+spec:
+  action: pod-kill
+  mode: one
+  selector:
+    labelSelectors:
+      app: flask
